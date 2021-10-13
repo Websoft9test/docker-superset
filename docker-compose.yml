@@ -1,112 +1,172 @@
-# this file from docker-compose.workspace, delete mail-server
-# default MySQL root password is 123456
+x-superset-image: &superset-image apache/superset:$APP_VERSION
+x-superset-depends-on: &superset-depends-on
+  - db
+  - redis
+x-superset-volumes: &superset-volumes
+  # /app/pythonpath_docker will be appended to the PYTHONPATH in the final container
+  - ./src/docker:/app/docker
+  - $VOLUMES_PATH_PREFIX/superset_home:/app/superset_home
 
-
-version: '3.8'
+version: "3.8"
 services:
-  onlyoffice-mysql-server:
-    container_name: ${APP_CONTAINER_NAME}-mysql
-    image: mysql:${DB_MYSQL_VERSION}
-    environment:
-     - MYSQL_ROOT_PASSWORD=${DB_MYSQL_PASSWORD}
-    stdin_open: true
-    user: root
-    tty: true
+  redis:
+    image: redis:$DB_REDIS_VERSION
+    container_name: $APP_CONTAINER_NAME-cache
     restart: always
-    volumes:
-     - ${VOLUMES_PATH_PREFIX}/config/mysql/conf.d:/etc/mysql/conf.d
-     - ${VOLUMES_PATH_PREFIX}/config/mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
-     - ${VOLUMES_PATH_PREFIX}/mysql_data:/var/lib/mysql
-     
-  onlyoffice-community-server:
-    container_name: ${APP_CONTAINER_NAME}
-    image: onlyoffice/communityserver:11.0.0.1458
-    depends_on:
-     - onlyoffice-mysql-server
-     - onlyoffice-document-server
-    environment:
-     - ONLYOFFICE_CORE_MACHINEKEY=core_secret
-     - CONTROL_PANEL_PORT_80_TCP=80
-     - CONTROL_PANEL_PORT_80_TCP_ADDR=onlyoffice-control-panel
-     - DOCUMENT_SERVER_PORT_80_TCP_ADDR=onlyoffice-document-server
-     - DOCUMENT_SERVER_JWT_ENABLED=true
-     - DOCUMENT_SERVER_JWT_SECRET=jwt_secret
-     - DOCUMENT_SERVER_JWT_HEADER=AuthorizationJwt
-     - MYSQL_SERVER_ROOT_PASSWORD=123456
-     - MYSQL_SERVER_DB_NAME=onlyoffice
-     - MYSQL_SERVER_HOST=onlyoffice-mysql-server
-     - MYSQL_SERVER_USER=onlyoffice
-     - MYSQL_SERVER_PASS=123456
     ports:
-     - '${APP_PORT}:80'
-     - '443'
-     - '5222:5222'
-    stdin_open: true
-    tty: true
-    restart: always
-    privileged: true
+      - 127.0.0.1:$DB_REDIS_PORT:$DB_REDIS_PORT
     volumes:
-     - ${VOLUMES_PATH_PREFIX}/community_data:/var/www/onlyoffice/Data
-     - ${VOLUMES_PATH_PREFIX}/community_log:/var/log/onlyoffice
-     - ${VOLUMES_PATH_PREFIX}/community_letsencrypt:/etc/letsencrypt
-     - ${VOLUMES_PATH_PREFIX}/document_data:/var/www/onlyoffice/DocumentServerData
-     - /sys/fs/cgroup:/sys/fs/cgroup:ro
-     - ${VOLUMES_PATH_PREFIX}/certs:/var/www/onlyoffice/Data/certs
-     
-  onlyoffice-document-server:
-    container_name:  ${APP_CONTAINER_NAME}-document-server
-    image: onlyoffice/documentserver:6.0.2
-    stdin_open: true
-    tty: true
-    restart: always
-    environment:
-     - JWT_ENABLED=true
-     - JWT_SECRET=jwt_secret
-     - JWT_HEADER=AuthorizationJwt
-    ports:
-     - '9002:80'
-    expose:
-      - '80'
-      - '443'
-    volumes:
-       - ${VOLUMES_PATH_PREFIX}/document_data:/var/www/onlyoffice/Data
-       - ${VOLUMES_PATH_PREFIX}/document_log:/var/log/onlyoffice
-       - ${VOLUMES_PATH_PREFIX}/document_fonts:/usr/share/fonts/truetype/custom
-       - .document_forgotten:/var/lib/onlyoffice/documentserver/App_Data/cache/files/forgotten
+      - $VOLUMES_PATH_PREFIX/redis:/data
 
-  onlyoffice-control-panel:
-    container_name:  ${APP_CONTAINER_NAME}-control-panel
-    depends_on:
-     - onlyoffice-document-server
-     - onlyoffice-community-server
-    image: onlyoffice/controlpanel:2.9.0.351
-    environment:
-     - ONLYOFFICE_CORE_MACHINEKEY=core_secret
-    expose:
-      - '80'
-      - '443'
+  db:
+    env_file: docker/.env
+    image: postgres:$DB_POSTGRESQL_VERSION
+    container_name: $APP_CONTAINER_NAME-db
     restart: always
+    ports:
+      - $DB_POSTGRESQL_PORT:$DB_POSTGRESQL_PORT
+    environment: 
+     # database configurations (do not modify)
+     - DATABASE_DB=$DB_POSTGRESQL_NAME
+     - DATABASE_HOST=$DB_POSTGRESQL_HOST
+     - DATABASE_PASSWORD=$DB_POSTGRESQL_PASSWORD
+     - DATABASE_USER=superset
+
+     # database engine specific environment variables
+     # change the below if you prefers another database engine
+     - DATABASE_PORT=$DB_POSTGRESQL_PORT
+     - DATABASE_DIALECT=postgresql
+     - POSTGRES_DB=$DB_POSTGRESQL_NAME
+     - POSTGRES_USER=$DB_POSTGRESQL_USER
+     - POSTGRES_PASSWORD=$DB_POSTGRESQL_PASSWORD
+
+     - REDIS_HOST=$DB_REDIS_HOST
+     - REDIS_PORT=$DB_REDIS_PORT
+
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ${VOLUMES_PATH_PREFIX}/controlpanel_data:/var/www/onlyoffice/Data
-      - ${VOLUMES_PATH_PREFIX}/controlpanel_log:/var/log/onlyoffice
-    stdin_open: true
-    tty: true
+      - $VOLUMES_PATH_PREFIX/postgresql:/var/lib/postgresql/data
+
+  superset:
+    env_file: docker/.env-non-dev
+    image: *superset-image
+    container_name: $APP_CONTAINER_NAME-app
+    restart: always
+    ports:
+      - $APP_PORT:8088
+    privileged: true
+    user: root
+    environment: 
+      - COMPOSE_PROJECT_NAME=superset
+      # database configurations (do not modify)
+      - DATABASE_DB=$DB_POSTGRESQL_NAME
+      - DATABASE_HOST=$DB_POSTGRESQL_HOST
+      - DATABASE_PASSWORD=$DB_POSTGRESQL_PASSWORD
+      - DATABASE_USER=$DB_POSTGRESQL_USER
+      # database engine specific environment variables
+      # change the below if you prefers another database engine
+      - DATABASE_PORT=$DB_POSTGRESQL_PORT
+      - DATABASE_DIALECT=postgresql
+      - POSTGRES_DB=$DB_POSTGRESQL_NAME
+      - POSTGRES_USER=$DB_POSTGRESQL_USER
+      - POSTGRES_PASSWORD=$DB_POSTGRESQL_PASSWORD
+      
+      # Add the mapped in /app/pythonpath_docker which allows devs to override stuff
+      - REDIS_HOST=$DB_REDIS_HOST
+      - REDIS_PORT=$DB_REDIS_PORT
+    depends_on: *superset-depends-on
+    volumes: *superset-volumes
+
+  superset-init:
+    image: *superset-image
+    container_name: $APP_CONTAINER_NAME-init
+    command: ["/app/docker/docker-init.sh"]
+    env_file: docker/.env-non-dev
+    environment: 
+      - COMPOSE_PROJECT_NAME=superset
+      # database configurations (do not modify)
+      - DATABASE_DB=$DB_POSTGRESQL_NAME
+      - DATABASE_HOST=$DB_POSTGRESQL_HOST
+      - DATABASE_PASSWORD=$DB_POSTGRESQL_PASSWORD
+      - DATABASE_USER=$DB_POSTGRESQL_USER
+      # database engine specific environment variables
+      # change the below if you prefers another database engine
+      - DATABASE_PORT=$DB_POSTGRESQL_PORT
+      - DATABASE_DIALECT=postgresql
+      - POSTGRES_DB=$DB_POSTGRESQL_NAME
+      - POSTGRES_USER=$DB_POSTGRESQL_USER
+      - POSTGRES_PASSWORD=$DB_POSTGRESQL_PASSWORD
+      
+      # Add the mapped in /app/pythonpath_docker which allows devs to override stuff
+      - REDIS_HOST=$DB_REDIS_HOST
+      - REDIS_PORT=$DB_REDIS_PORT
+    depends_on: *superset-depends-on
+    user: "root"
+    volumes: *superset-volumes
+
+  superset-worker:
+    image: *superset-image
+    container_name: $APP_CONTAINER_NAME-worker
+    command: ["/app/docker/docker-bootstrap.sh", "worker"]
+    env_file: docker/.env-non-dev
+    environment: 
+      - COMPOSE_PROJECT_NAME=superset
+      # database configurations (do not modify)
+      - DATABASE_DB=$DB_POSTGRESQL_NAME
+      - DATABASE_HOST=$DB_POSTGRESQL_HOST
+      - DATABASE_PASSWORD=$DB_POSTGRESQL_PASSWORD
+      - DATABASE_USER=$DB_POSTGRESQL_USER
+      # database engine specific environment variables
+      # change the below if you prefers another database engine
+      - DATABASE_PORT=$DB_POSTGRESQL_PORT
+      - DATABASE_DIALECT=postgresql
+      - POSTGRES_DB=$DB_POSTGRESQL_NAME
+      - POSTGRES_USER=$DB_POSTGRESQL_USER
+      - POSTGRES_PASSWORD=$DB_POSTGRESQL_PASSWORD
+      
+      # Add the mapped in /app/pythonpath_docker which allows devs to override stuff
+      - REDIS_HOST=$DB_REDIS_HOST
+      - REDIS_PORT=$DB_REDIS_PORT
+    restart: always
+    depends_on: *superset-depends-on
+    user: "root"
+    volumes: *superset-volumes
+
+  superset-worker-beat:
+    image: *superset-image
+    container_name: $APP_CONTAINER_NAME-worker-beat
+    command: ["/app/docker/docker-bootstrap.sh", "beat"]
+    env_file: docker/.env-non-dev
+    environment: 
+      - COMPOSE_PROJECT_NAME=superset
+      # database configurations (do not modify)
+      - DATABASE_DB=$DB_POSTGRESQL_NAME
+      - DATABASE_HOST=$DB_POSTGRESQL_HOST
+      - DATABASE_PASSWORD=$DB_POSTGRESQL_PASSWORD
+      - DATABASE_USER=$DB_POSTGRESQL_USER
+      # database engine specific environment variables
+      # change the below if you prefers another database engine
+      - DATABASE_PORT=$DB_POSTGRESQL_PORT
+      - DATABASE_DIALECT=postgresql
+      - POSTGRES_DB=$DB_POSTGRESQL_NAME
+      - POSTGRES_USER=$DB_POSTGRESQL_USER
+      - POSTGRES_PASSWORD=$DB_POSTGRESQL_PASSWORD
+      
+      # Add the mapped in /app/pythonpath_docker which allows devs to override stuff
+      - REDIS_HOST=$DB_REDIS_HOST
+      - REDIS_PORT=$DB_REDIS_PORT
+    restart: always
+    depends_on: *superset-depends-on
+    user: "root"
+    volumes: *superset-volumes
+
+volumes:
+  superset_home:
+    external: false
+  db_home:
+    external: false
+  redis:
+    external: false
     
 networks:
   default:
-      name: ${APP_NETWORK}
-    
-volumes:
-  document_data:
-    driver: local
-  document_log:
-    driver: local
-  document_forgotten:
-  community_mysql:
-  community_data:
-  community_log:
-  community_letsencrypt:
-  controlpanel_data:
-  controlpanel_log:
-  mysql_data:
+      name: "$APP_NETWORK"
