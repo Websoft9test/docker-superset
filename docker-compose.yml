@@ -19,7 +19,7 @@ services:
       - $VOLUMES_PATH_PREFIX/redis:/data
 
   db:
-    env_file: docker/.env
+    env_file: src/docker/.env
     image: postgres:$DB_POSTGRESQL_VERSION
     container_name: $APP_CONTAINER_NAME-db
     restart: always
@@ -47,7 +47,7 @@ services:
       - $VOLUMES_PATH_PREFIX/postgresql:/var/lib/postgresql/data
 
   superset:
-    env_file: docker/.env-non-dev
+    env_file: src/docker/.env-non-dev
     image: *superset-image
     container_name: $APP_CONTAINER_NAME-app
     restart: always
@@ -80,7 +80,7 @@ services:
     image: *superset-image
     container_name: $APP_CONTAINER_NAME-init
     command: ["/app/docker/docker-init.sh"]
-    env_file: docker/.env-non-dev
+    env_file: src/docker/.env-non-dev
     environment: 
       - COMPOSE_PROJECT_NAME=superset
       # database configurations (do not modify)
@@ -107,7 +107,7 @@ services:
     image: *superset-image
     container_name: $APP_CONTAINER_NAME-worker
     command: ["/app/docker/docker-bootstrap.sh", "worker"]
-    env_file: docker/.env-non-dev
+    env_file: src/docker/.env-non-dev
     environment: 
       - COMPOSE_PROJECT_NAME=superset
       # database configurations (do not modify)
@@ -135,7 +135,7 @@ services:
     image: *superset-image
     container_name: $APP_CONTAINER_NAME-worker-beat
     command: ["/app/docker/docker-bootstrap.sh", "beat"]
-    env_file: docker/.env-non-dev
+    env_file: src/docker/.env-non-dev
     environment: 
       - COMPOSE_PROJECT_NAME=superset
       # database configurations (do not modify)
