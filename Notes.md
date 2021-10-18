@@ -1,4 +1,4 @@
-## Strapi
+## Superset
 
 Superset 是一种强大的大数据分析工具
 
