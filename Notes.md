@@ -1,6 +1,9 @@
-## About
+## Strapi
 
-This repository is forked from ONLYOFFICE/Docker-CommunityServer, we have the following modifications are provided
+Superset 是一种强大的大数据分析工具
 
-* replace README.md
-* add README-zh.md, CHANGELOG.md, Note.md, License.md, docker-compose-production.yml, .github folder
+
+### 安装
+
+APP_VERSION为latest实际上对应的是开发版本，所以需要指定具体版本，如APP_VERSION=1.3.0  
+docker文件夹是其中容器启动的必要文件，需要和上游项目定期同步；docker文件夹中的脚本是通过路径直接执行，需要执行权限，所以修改上传时需要注意不能改变其权限，一般来说，直接在linux服务器上提交不会产生问题。下载windows本地后，通过git上传会产生权限问题，导致多个容器无法正常启动。
