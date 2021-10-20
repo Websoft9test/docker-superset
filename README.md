@@ -79,7 +79,7 @@ You should modify ports at [docker-compose file](docker-compose-production.yml) 
 
 ### Usage instructions
 
-You can point your browser to: *`http://Instance's Internet IP:8088`*  
+You can point your browser to: *`http://Instance's Internet IP:9001`*  
 
 The following is the information that may be needed during use
 
@@ -95,7 +95,7 @@ By default, the available users are:
 
 | Service | Port | Use |  Necessity |
 | --- | --- | --- | --- |
-| superset | 8088 | Browser access to Superset by http | Y |
+| superset | 9001 | Browser access to Superset by http | Y |
 | postgresql | 5432 | Accessing PostgreSQL database with TCP | Y |
 ## Documentation
 

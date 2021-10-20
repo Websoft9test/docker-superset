@@ -86,7 +86,7 @@ sudo docker-compose -f docker-compose-production.yml --env-file .env_all up -d
 
 ### 使用说明
 
-启动应用后，本地浏览器访问 URL: *`http://服务器公网IP:8088`* 进入应用。  
+启动应用后，本地浏览器访问 URL: *`http://服务器公网IP:9001`* 进入应用。  
 
 下面是使用过程中可能需要的信息
 
@@ -102,7 +102,7 @@ sudo docker-compose -f docker-compose-production.yml --env-file .env_all up -d
 
 | 名称 | 端口号 | 用途 |  必要性 |
 | --- | --- | --- | --- |
-| superset | 8088 | 浏览器访问 Superset | Y |
+| superset | 9001 | 浏览器访问 Superset | Y |
 | postgresql | 5432 | TCP 访问PostgreSQL数据库 | Y |
 ## 文档
 
