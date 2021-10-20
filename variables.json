@@ -22,7 +22,7 @@
   "services":[
     {
       "name": "superset",
-      "port": "8088",
+      "port": "9001",
       "description_cn": "浏览器访问 Superset",
       "description_en": "Browser access to Superset by http",
       "required": "Y"
