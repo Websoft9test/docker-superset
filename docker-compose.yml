@@ -11,7 +11,7 @@ version: "3.8"
 services:
   redis:
     image: redis:$DB_REDIS_VERSION
-    container_name: $APP_CONTAINER_NAME-cache
+    container_name: $APP_NAME-cache
     restart: always
     ports:
       - 127.0.0.1:$DB_REDIS_PORT:$DB_REDIS_PORT
@@ -21,7 +21,7 @@ services:
   db:
     env_file: src/docker/.env
     image: postgres:$DB_POSTGRESQL_VERSION
-    container_name: $APP_CONTAINER_NAME-db
+    container_name: $APP_NAME-db
     restart: always
     ports:
       - $DB_POSTGRESQL_PORT:$DB_POSTGRESQL_PORT
@@ -49,7 +49,7 @@ services:
   superset:
     env_file: src/docker/.env-non-dev
     image: *superset-image
-    container_name: $APP_CONTAINER_NAME-app
+    container_name: $APP_NAME-app
     restart: always
     ports:
       - $APP_PORT:8088
@@ -78,7 +78,7 @@ services:
 
   superset-init:
     image: *superset-image
-    container_name: $APP_CONTAINER_NAME-init
+    container_name: $APP_NAME-init
     command: ["/app/docker/docker-init.sh"]
     env_file: src/docker/.env-non-dev
     environment: 
@@ -105,7 +105,7 @@ services:
 
   superset-worker:
     image: *superset-image
-    container_name: $APP_CONTAINER_NAME-worker
+    container_name: $APP_NAME-worker
     command: ["/app/docker/docker-bootstrap.sh", "worker"]
     env_file: src/docker/.env-non-dev
     environment: 
@@ -133,7 +133,7 @@ services:
 
   superset-worker-beat:
     image: *superset-image
-    container_name: $APP_CONTAINER_NAME-worker-beat
+    container_name: $APP_NAME-worker-beat
     command: ["/app/docker/docker-bootstrap.sh", "beat"]
     env_file: src/docker/.env-non-dev
     environment: 
@@ -169,4 +169,4 @@ volumes:
     
 networks:
   default:
-      name: "$APP_NETWORK"
+      name: "$APP_NAME"
