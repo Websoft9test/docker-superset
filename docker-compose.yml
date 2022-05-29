@@ -169,7 +169,7 @@ services:
 volumes:
   superset_home:
     external: false
-  db_home:
+  postgresql:
     external: false
   redis:
     external: false
