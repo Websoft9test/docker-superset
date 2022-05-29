@@ -80,7 +80,7 @@ services:
       - REDIS_HOST=$DB_REDIS_HOST
       - REDIS_PORT=$DB_REDIS_PORT
       - APP_PASSWORD=$APP_PASSWORD
-    depends_on: *superset-depends-on
+    depends_on: superset-worker
     volumes: *superset-volumes
 
   superset-init:
