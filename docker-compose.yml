@@ -16,7 +16,7 @@ services:
     ports:
       - 127.0.0.1:$DB_REDIS_PORT:$DB_REDIS_PORT
     volumes:
-      - $VOLUMES_PATH_PREFIX/redis:/data
+      - redis:/data
 
   db:
     env_file: src/docker/.env
