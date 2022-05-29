@@ -55,6 +55,12 @@ services:
       - $APP_PORT:8088
     privileged: true
     user: root
+    command:
+      - /bin/bash
+      - -c
+      - |
+        sed -i 's/ADMIN_PASSWORD=*/ADMIN_PASSWORD="${APP_PASSWORD}"/g' /app/docker/docker-init.sh
+        /usr/bin/docker-entrypoint.sh
     environment: 
       - COMPOSE_PROJECT_NAME=superset
       # database configurations (do not modify)
