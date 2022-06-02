@@ -1,3 +1,6 @@
+# image: https://hub.docker.com/r/apache/superset
+# docs: https://github.com/apache/superset
+
 x-superset-image: &superset-image apache/superset:$APP_VERSION
 x-superset-depends-on: &superset-depends-on
   - db
