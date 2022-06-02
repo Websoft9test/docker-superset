@@ -59,11 +59,8 @@ services:
     privileged: true
     user: root
     command:
-      - /bin/bash
-      - -c
-      - |
-        sed -i 's/ADMIN_PASSWORD=*/ADMIN_PASSWORD="${APP_PASSWORD}"/g' /app/docker/docker-init.sh
-        /usr/bin/docker-entrypoint.sh
+      - sed -i 's/ADMIN_PASSWORD=*/ADMIN_PASSWORD="${APP_PASSWORD}"/g' /app/docker/docker-init.sh
+      - /app/docker/docker-ci.sh
     environment: 
       - COMPOSE_PROJECT_NAME=superset
       # database configurations (do not modify)
