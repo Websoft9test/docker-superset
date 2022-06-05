@@ -58,9 +58,6 @@ services:
       - $APP_PORT:8088
     privileged: true
     user: root
-    command:
-      - sed -i 's/ADMIN_PASSWORD=*/ADMIN_PASSWORD="${APP_PASSWORD}"/g' /app/docker/docker-init.sh
-      - /app/docker/docker-ci.sh
     environment: 
       - COMPOSE_PROJECT_NAME=superset
       # database configurations (do not modify)
@@ -79,7 +76,6 @@ services:
       # Add the mapped in /app/pythonpath_docker which allows devs to override stuff
       - REDIS_HOST=$DB_REDIS_HOST
       - REDIS_PORT=$DB_REDIS_PORT
-      - APP_PASSWORD=$APP_PASSWORD
     depends_on: *superset-depends-on
     volumes: *superset-volumes
 
@@ -106,6 +102,7 @@ services:
       # Add the mapped in /app/pythonpath_docker which allows devs to override stuff
       - REDIS_HOST=$DB_REDIS_HOST
       - REDIS_PORT=$DB_REDIS_PORT
+      - APP_PASSWORD=$APP_PASSWORD
     depends_on: *superset-depends-on
     user: "root"
     volumes: *superset-volumes
