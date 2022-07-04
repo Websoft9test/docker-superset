@@ -173,4 +173,5 @@ volumes:
     
 networks:
   default:
-      name: "$APP_NAME"
+    name: ${APP_NETWORK}
+    external: true
